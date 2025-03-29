@@ -7,6 +7,7 @@ import com.phasmidsoftware.dsaipg.util.logging.LazyLogger;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -65,21 +66,18 @@ public class SortBenchmarkHelper {
      */
     // TEST
     public static String[] getWords(String resource, Function<String, Collection<String>> getStrings) throws FileNotFoundException {
-        List<String> words = new ArrayList<>();
         final FileReader fr = new FileReader(getFile(resource, SortBenchmarkHelper.class));
-        for (Object line : new BufferedReader(fr).lines().toArray()) words.addAll(getStrings.apply((String) line));
-        words = words.stream().distinct().filter(new Predicate<>() {
-            private static final int MINIMUM_LENGTH = 2;
+        List<String> words = new BufferedReader(fr).lines()
+                .flatMap(line -> getStrings.apply(line).stream())
+                .distinct()
+                .filter(s -> s.length() >= 2)
+                .collect(Collectors.toList());
 
-            public boolean test(String s) {
-                return s.length() >= MINIMUM_LENGTH;
-            }
-        }).collect(Collectors.toList());
         logger.info("Testing with words: " + formatWhole(words.size()) + " from " + resource);
-        String[] result = new String[words.size()];
-        result = words.toArray(result);
-        return result;
+        return words.toArray(new String[0]);
     }
+
+
 
     /**
      * CONSIDER making this more efficient. It takes uses a lot of time!
